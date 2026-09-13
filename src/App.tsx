@@ -33,6 +33,8 @@ import CalculatorDetail from './pages/CalculatorDetail'
 import UnitConverter from './pages/UnitConverter'
 import Resources from './pages/Resources'
 import ResourceDetail from './pages/ResourceDetail'
+import MockTests from './pages/MockTests'
+import MockTestDetail from './pages/MockTestDetail'
 import Contact from './pages/Contact'
 import Dashboard from './pages/Dashboard'
 import ScienceLanding from './pages/ScienceLanding'
@@ -115,6 +117,9 @@ export default function App() {
 
           <Route path="/resources" element={<Resources />} />
           <Route path="/resources/:slug" element={<ResourceDetail />} />
+
+          <Route path="/mock-tests" element={<MockTests />} />
+          <Route path="/mock-tests/:slug" element={<MockTestDetail />} />
 
           <Route path="/contact" element={<Contact />} />
           <Route path="/dashboard" element={<Dashboard />} />
