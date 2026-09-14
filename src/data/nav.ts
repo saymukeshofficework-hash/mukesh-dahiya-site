@@ -68,6 +68,7 @@ export const navGroups: NavGroup[] = [
     links: [
       { label: 'Calculators', to: '/calculators' },
       { label: 'Unit Converter', to: '/calculators/converter' },
+      { label: 'KDP Cover Maker', to: '/tools/kdp-cover-maker', badge: 'New' },
     ],
   },
 ]
