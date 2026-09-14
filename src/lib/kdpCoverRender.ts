@@ -12,11 +12,14 @@ export interface TextLayer {
   fontFamily: 'serif' | 'sans'
 }
 
+export type ImageFit = 'cover' | 'stretch'
+
 export interface ImageLayer {
   src: string | null
   zoom: number // 100 = fills the panel (cover fit), >100 zooms in
   posXPct: number // 0-100, pans the focal point horizontally
   posYPct: number // 0-100, pans the focal point vertically
+  fit: ImageFit // 'cover' crops to fill without distortion, 'stretch' fills exactly and may distort
 }
 
 export type BackgroundMode = 'unified' | 'separate'
@@ -55,9 +58,9 @@ export function defaultCoverState(): CoverState {
     pageCount: 200,
     backgroundMode: 'separate',
     bgColor: '#0f2a4a',
-    unified: { src: null, zoom: 100, posXPct: 50, posYPct: 50 },
-    front: { src: null, zoom: 100, posXPct: 50, posYPct: 50 },
-    back: { src: null, zoom: 100, posXPct: 50, posYPct: 50 },
+    unified: { src: null, zoom: 100, posXPct: 50, posYPct: 50, fit: 'cover' },
+    front: { src: null, zoom: 100, posXPct: 50, posYPct: 50, fit: 'cover' },
+    back: { src: null, zoom: 100, posXPct: 50, posYPct: 50, fit: 'cover' },
     spineColor: '#0f2a4a',
     title: { text: 'Your Book Title', sizePt: 44, color: '#ffffff', align: 'center', yPct: 18, bold: true, fontFamily: 'serif' },
     subtitle: { text: 'A Compelling Subtitle Goes Here', sizePt: 18, color: '#ddb84a', align: 'center', yPct: 32, bold: false, fontFamily: 'sans' },
@@ -130,6 +133,14 @@ export async function upscaleDataUrl(src: string, scale: number): Promise<string
   return curCanvas.toDataURL('image/png')
 }
 
+function drawImagePanel(ctx: CanvasRenderingContext2D, img: HTMLImageElement, layer: ImageLayer, x: number, y: number, w: number, h: number) {
+  if (layer.fit === 'stretch') {
+    drawImageStretch(ctx, img, layer, x, y, w, h)
+  } else {
+    drawImageCover(ctx, img, layer, x, y, w, h)
+  }
+}
+
 function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, layer: ImageLayer, x: number, y: number, w: number, h: number) {
   ctx.save()
   ctx.beginPath()
@@ -158,6 +169,26 @@ function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, la
   const drawX = x - offsetX
   const drawY = y - offsetY
   ctx.drawImage(img, drawX, drawY, drawW, drawH)
+  ctx.restore()
+}
+
+/** Fills the panel exactly (ignoring the image's aspect ratio); zoom/position can pan a stretched-in crop. */
+function drawImageStretch(ctx: CanvasRenderingContext2D, img: HTMLImageElement, layer: ImageLayer, x: number, y: number, w: number, h: number) {
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x, y, w, h)
+  ctx.clip()
+
+  const zoom = Math.max(50, layer.zoom) / 100
+  const drawW = w * zoom
+  const drawH = h * zoom
+
+  const maxOffsetX = Math.max(0, drawW - w)
+  const maxOffsetY = Math.max(0, drawH - h)
+  const offsetX = (layer.posXPct / 100) * maxOffsetX
+  const offsetY = (layer.posYPct / 100) * maxOffsetY
+
+  ctx.drawImage(img, x - offsetX, y - offsetY, drawW, drawH)
   ctx.restore()
 }
 
@@ -219,13 +250,13 @@ export function drawCover(canvas: HTMLCanvasElement, state: CoverState, opts: Dr
 
   if (state.backgroundMode === 'unified') {
     if (opts.images.unified) {
-      drawImageCover(ctx, opts.images.unified, state.unified, 0, 0, canvas.width, canvas.height)
+      drawImagePanel(ctx, opts.images.unified, state.unified, 0, 0, canvas.width, canvas.height)
     }
   } else {
     ctx.fillStyle = state.spineColor
     ctx.fillRect(spineRect.x, spineRect.y, spineRect.w, spineRect.h)
-    if (opts.images.back) drawImageCover(ctx, opts.images.back, state.back, backRect.x, backRect.y, backRect.w, backRect.h)
-    if (opts.images.front) drawImageCover(ctx, opts.images.front, state.front, frontRect.x, frontRect.y, frontRect.w, frontRect.h)
+    if (opts.images.back) drawImagePanel(ctx, opts.images.back, state.back, backRect.x, backRect.y, backRect.w, backRect.h)
+    if (opts.images.front) drawImagePanel(ctx, opts.images.front, state.front, frontRect.x, frontRect.y, frontRect.w, frontRect.h)
   }
 
   // Front text

@@ -17,6 +17,7 @@ import {
   loadImage,
   upscaleDataUrl,
   type CoverState,
+  type ImageFit,
   type ImageLayer,
   type TextAlign,
   type TextLayer,
@@ -467,6 +468,13 @@ function ImageUploader({
       )}
       {layer.src && (
         <div className="mt-3 space-y-3">
+          <div>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Fit</label>
+            <select className="input" value={layer.fit} onChange={(e) => onChange({ fit: e.target.value as ImageFit })}>
+              <option value="cover">Cover (crop to fill, no distortion)</option>
+              <option value="stretch">Stretch (fill exactly, may distort)</option>
+            </select>
+          </div>
           <div>
             <div className="mb-1 flex justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Zoom</span>
