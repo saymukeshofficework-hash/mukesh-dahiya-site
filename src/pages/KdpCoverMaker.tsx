@@ -78,6 +78,7 @@ export default function KdpCoverMaker() {
   }
 
   const [enhancingKey, setEnhancingKey] = useState<ImageKey | null>(null)
+  const [enhanceError, setEnhanceError] = useState<{ key: ImageKey; message: string } | null>(null)
 
   function panelWidthInFor(key: ImageKey) {
     return key === 'unified' ? dims.wrapW : dims.trimW
@@ -94,10 +95,14 @@ export default function KdpCoverMaker() {
     const currentDpi = effectiveDpiFor(key)
     if (!layer.src || currentDpi === null || currentDpi >= TARGET_DPI) return
     setEnhancingKey(key)
+    setEnhanceError(null)
     try {
       const scale = TARGET_DPI / currentDpi
       const upscaled = await upscaleDataUrl(layer.src, scale)
       updateImage(key, { src: upscaled })
+    } catch (err) {
+      console.error('Increase DPI failed', err)
+      setEnhanceError({ key, message: err instanceof Error ? err.message : 'Could not increase DPI for this image.' })
     } finally {
       setEnhancingKey(null)
     }
@@ -335,6 +340,9 @@ export default function KdpCoverMaker() {
                           {enhancingKey === c.fixImageKey ? 'Increasing DPI…' : 'Increase DPI'}
                         </button>
                       )}
+                      {c.fixImageKey && enhanceError && enhanceError.key === c.fixImageKey && (
+                        <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">{enhanceError.message}</p>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -367,6 +375,7 @@ export default function KdpCoverMaker() {
                   dpi={effectiveDpiFor('unified')}
                   onEnhance={() => enhanceImage('unified')}
                   enhancing={enhancingKey === 'unified'}
+                  enhanceError={enhanceError?.key === 'unified' ? enhanceError.message : null}
                 />
               )}
               {tab === 'front' && (
@@ -378,6 +387,7 @@ export default function KdpCoverMaker() {
                   dpi={effectiveDpiFor('front')}
                   onEnhance={() => enhanceImage('front')}
                   enhancing={enhancingKey === 'front'}
+                  enhanceError={enhanceError?.key === 'front' ? enhanceError.message : null}
                 />
               )}
               {tab === 'spine' && <SpinePanel state={state} update={update} />}
@@ -390,6 +400,7 @@ export default function KdpCoverMaker() {
                   dpi={effectiveDpiFor('back')}
                   onEnhance={() => enhanceImage('back')}
                   enhancing={enhancingKey === 'back'}
+                  enhanceError={enhanceError?.key === 'back' ? enhanceError.message : null}
                 />
               )}
               {tab === 'preflight' && (
@@ -422,6 +433,7 @@ function ImageUploader({
   dpi,
   onEnhance,
   enhancing,
+  enhanceError,
 }: {
   layer: ImageLayer
   onFile: (dataUrl: string) => void
@@ -430,6 +442,7 @@ function ImageUploader({
   dpi?: number | null
   onEnhance?: () => void
   enhancing?: boolean
+  enhanceError?: string | null
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const lowRes = dpi !== undefined && dpi !== null && dpi < 300
@@ -466,6 +479,7 @@ function ImageUploader({
           )}
         </div>
       )}
+      {enhanceError && <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">{enhanceError}</p>}
       {layer.src && (
         <div className="mt-3 space-y-3">
           <div>
@@ -557,12 +571,14 @@ function SetupPanel({
   dpi,
   onEnhance,
   enhancing,
+  enhanceError,
 }: {
   state: CoverState
   update: (p: Partial<CoverState>) => void
   dpi?: number | null
   onEnhance?: () => void
   enhancing?: boolean
+  enhanceError?: string | null
 }) {
   return (
     <div>
@@ -613,6 +629,7 @@ function SetupPanel({
             dpi={dpi}
             onEnhance={onEnhance}
             enhancing={enhancing}
+            enhanceError={enhanceError}
           />
         </Field>
       )}
@@ -628,6 +645,7 @@ function FrontPanel({
   dpi,
   onEnhance,
   enhancing,
+  enhanceError,
 }: {
   state: CoverState
   update: (p: Partial<CoverState>) => void
@@ -636,6 +654,7 @@ function FrontPanel({
   dpi?: number | null
   onEnhance?: () => void
   enhancing?: boolean
+  enhanceError?: string | null
 }) {
   return (
     <div>
@@ -649,6 +668,7 @@ function FrontPanel({
             dpi={dpi}
             onEnhance={onEnhance}
             enhancing={enhancing}
+            enhanceError={enhanceError}
           />
         </Field>
       )}
@@ -700,6 +720,7 @@ function BackPanel({
   dpi,
   onEnhance,
   enhancing,
+  enhanceError,
 }: {
   state: CoverState
   update: (p: Partial<CoverState>) => void
@@ -708,6 +729,7 @@ function BackPanel({
   dpi?: number | null
   onEnhance?: () => void
   enhancing?: boolean
+  enhanceError?: string | null
 }) {
   return (
     <div>
@@ -721,6 +743,7 @@ function BackPanel({
             dpi={dpi}
             onEnhance={onEnhance}
             enhancing={enhancing}
+            enhanceError={enhanceError}
           />
         </Field>
       )}
