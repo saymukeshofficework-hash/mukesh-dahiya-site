@@ -31,6 +31,7 @@ import NeetRevision from './pages/NeetRevision'
 import Calculators from './pages/Calculators'
 import CalculatorDetail from './pages/CalculatorDetail'
 import UnitConverter from './pages/UnitConverter'
+import KdpCoverMaker from './pages/KdpCoverMaker'
 import Resources from './pages/Resources'
 import ResourceDetail from './pages/ResourceDetail'
 import MockTests from './pages/MockTests'
@@ -110,6 +111,8 @@ export default function App() {
           <Route path="/calculators" element={<Calculators />} />
           <Route path="/calculators/converter" element={<UnitConverter />} />
           <Route path="/calculators/:slug" element={<CalculatorDetail />} />
+
+          <Route path="/tools/kdp-cover-maker" element={<KdpCoverMaker />} />
 
           {/* 3D Virtual Biology Lab */}
           <Route path="/virtual-lab" element={<VirtualLabHub />} />
